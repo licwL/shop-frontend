@@ -10,7 +10,8 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-const BASE_URL = 'http://localhost:8080'
+// 走 Vite proxy 绕过系统代理，不发绝对路径
+const BASE_URL = ''
 
 export function createRequest() {
   const instance = axios.create({

@@ -24,6 +24,11 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      '/admin': 'http://localhost:8080',
+      '/user': 'http://localhost:8080',
+      '/health': 'http://localhost:8080',
+    },
     fs: {
       allow: ['..'],
     },
