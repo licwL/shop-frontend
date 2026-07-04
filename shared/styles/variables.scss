@@ -22,9 +22,10 @@ $success: #52A97E;                      // 成功绿
 $bg-page: #F5F6FA;                      // 浅灰底
 $bg-card: #FFFFFF;                      // 卡片白
 $bg-sidebar: #1E2130;                   // 侧边栏深色
-$text-primary: #1D1F2A;                 // 主文字
-$text-secondary: #8A8D99;               // 次要文字
-$border-color: #E8E9ED;                 // 边框
+$text-primary: #1D1F2A;                 // 主文字 — 在 #F5F6FA 上 ≈12.5:1
+$text-secondary: #5B5E6B;               // 次要文字 — 在 #F5F6FA 上 ≈6.2:1（符合AA）
+$text-muted: #8A8D99;                   // 辅助/禁用文字（仅用于大号或装饰性文本）
+$border-color: #E0E1E6;                 // 边框 — 稍深，增强分隔感
 
 // ----- 布局 -----
 $sidebar-width: 220px;

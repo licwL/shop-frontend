@@ -1,36 +1,38 @@
 <template>
-  <div class="detail-page" v-loading="loading">
-    <div class="detail-layout" v-if="product">
-      <!-- 左：大图 -->
-      <div class="img-section">
-        <el-image v-if="product.image" :src="product.image" fit="cover" class="detail-img" />
-        <div v-else class="img-empty"><el-icon :size="64"><PictureFilled /></el-icon></div>
-      </div>
+  <div class="page-container">
+    <div class="detail-layout" v-loading="loading">
+      <template v-if="product">
+        <!-- 左图 -->
+        <div class="img-section">
+          <el-image v-if="product.image" :src="product.image" fit="cover" class="main-img" />
+          <div v-else class="img-empty"><el-icon :size="56"><PictureFilled /></el-icon></div>
+        </div>
 
-      <!-- 右：信息 -->
-      <div class="info-section">
-        <h1 class="name">{{ product.name }}</h1>
-        <div class="meta-row">
-          <el-tag size="small">{{ product.categoryName }}</el-tag>
-          <span class="sales">已售 {{ product.sales || 0 }} | 库存 {{ product.stock || 0 }}</span>
-        </div>
-        <div class="price-box">
-          <span class="price-symbol">¥</span>
-          <span class="price-value">{{ product.price?.toFixed(2) }}</span>
-        </div>
-        <p class="desc" v-if="product.description">{{ product.description }}</p>
+        <!-- 右信息 -->
+        <div class="info-section">
+          <div class="bread"><span>{{ product.categoryName }}</span></div>
+          <h1 class="name display-font">{{ product.name }}</h1>
+          <div class="meta">
+            <span class="meta-item">已售 {{ product.sales || 0 }}</span>
+            <span class="meta-item">库存 {{ product.stock || 0 }}</span>
+          </div>
+          <div class="price-box">
+            <span class="price-sym">¥</span>
+            <span class="price-val display-font">{{ product.price?.toFixed(2) }}</span>
+          </div>
+          <p class="desc" v-if="product.description">{{ product.description }}</p>
 
-        <div class="action-bar">
-          <el-input-number v-model="quantity" :min="1" :max="product.stock || 999" size="large" />
-          <el-button type="primary" size="large" class="add-cart-btn" :disabled="product.status !== 1" @click="handleAddCart">
-            <el-icon><ShoppingCart /></el-icon> 加入购物车
-          </el-button>
-          <el-button :type="faved ? 'warning' : 'default'" size="large" @click="toggleFav">
-            <el-icon :size="16"><StarFilled v-if="faved" /><Star v-else /></el-icon>
-            {{ faved ? '已收藏' : '收藏' }}
-          </el-button>
+          <div class="action-bar">
+            <el-input-number v-model="quantity" :min="1" :max="product.stock || 999" size="large" />
+            <el-button type="primary" size="large" class="cart-btn" :disabled="product.status !== 1" @click="add">
+              <el-icon><ShoppingCart /></el-icon> 加入购物车
+            </el-button>
+            <el-button :type="faved ? 'warning' : 'default'" size="large" @click="toggleFav">
+              <el-icon :size="16"><StarFilled v-if="faved" /><Star v-else /></el-icon>
+            </el-button>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -50,109 +52,102 @@ const loading = ref(false)
 const faved = ref(false)
 const quantity = ref(1)
 
-async function fetchDetail() {
+async function load() {
   loading.value = true
-  try {
-    const res = await getProductDetail(route.params.id)
-    product.value = res.data
-    if (product.value) checkFav()
-  } catch { /* ignore */ } finally { loading.value = false }
+  try { product.value = (await getProductDetail(route.params.id)).data; await checkFav() } catch { /* ignore */ } finally { loading.value = false }
 }
 
 async function checkFav() {
-  try {
-    const res = await getFavoriteList()
-    faved.value = (res.data || []).some(f => f.productId === product.value?.id)
-  } catch { /* ignore */ }
+  try { faved.value = ((await getFavoriteList()).data || []).some(f => f.productId === product.value?.id) } catch { /* ignore */ }
 }
 
 async function toggleFav() {
   try {
-    if (faved.value) {
-      await removeFavorite(product.value.id)
-      ElMessage.success('已取消收藏')
-    } else {
-      await addFavorite(product.value.id)
-      ElMessage.success('已收藏')
-    }
+    faved.value ? (await removeFavorite(product.value.id), ElMessage.success('已取消收藏')) : (await addFavorite(product.value.id), ElMessage.success('已收藏'))
     faved.value = !faved.value
   } catch { /* ignore */ }
 }
 
-async function handleAddCart() {
-  try {
-    await addToCart({ productId: product.value.id, amount: product.value.price })
-    ElMessage.success(`已添加 ${quantity.value} 件到购物车`)
-  } catch { /* ignore */ }
+async function add() {
+  try { await addToCart({ productId: product.value.id, amount: product.value.price }); ElMessage.success(`已添加 ${quantity.value} 件`) } catch { /* ignore */ }
 }
 
-onMounted(() => fetchDetail())
+onMounted(() => load())
 </script>
 
 <style scoped lang="scss">
-.detail-page {
-  background: $bg-card;
-  border-radius: $radius;
-  padding: 24px;
-}
-
 .detail-layout {
   display: flex;
-  gap: 32px;
+  gap: 36px;
+  background: $bg-card;
+  border-radius: $radius;
+  padding: 28px;
+
+  @media (max-width: 768px) { flex-direction: column; gap: 20px; padding: 16px; }
 }
 
 .img-section {
-  width: 440px;
-  height: 440px;
+  width: 460px;
+  height: 460px;
   flex-shrink: 0;
-  background: $--el-color-primary-light-9;
+  background: $bg-page;
   border-radius: $radius;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 
-  .detail-img { width: 100%; height: 100%; }
+  @media (max-width: 768px) { width: 100%; aspect-ratio: 1; height: auto; }
+
+  .main-img { width: 100%; height: 100%; }
   .img-empty { color: $--el-color-primary-light-5; }
 }
 
 .info-section {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 
-  .name { font-size: 22px; color: $text-primary; margin-bottom: 12px; line-height: 1.4; }
+  .bread { font-size: 13px; color: $text-secondary; margin-bottom: 8px; }
 
-  .meta-row {
+  .name {
+    font-size: 24px;
+    color: $text-primary;
+    line-height: 1.35;
+    margin-bottom: 12px;
+
+    @media (max-width: 768px) { font-size: 20px; }
+  }
+
+  .meta {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: 20px;
 
-    .sales { font-size: 13px; color: $text-secondary; }
+    .meta-item { font-size: 13px; color: $text-secondary; }
   }
 
   .price-box {
     background: $bg-page;
-    padding: 16px 20px;
+    padding: 18px 22px;
     border-radius: $radius;
     margin-bottom: 20px;
 
-    .price-symbol { font-size: 18px; color: #F56C6C; font-weight: 600; }
-    .price-value { font-size: 32px; color: #F56C6C; font-weight: 700; margin-left: 4px; }
+    .price-sym { font-size: 18px; color: $accent; font-weight: 500; }
+    .price-val { font-size: 34px; color: $accent; font-weight: 600; margin-left: 4px; }
   }
 
-  .desc {
-    font-size: 14px;
-    color: $text-secondary;
-    line-height: 1.8;
-    margin-bottom: 28px;
-  }
+  .desc { font-size: 14px; color: $text-secondary; line-height: 1.8; margin-bottom: auto; }
 
   .action-bar {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-top: 24px;
 
-    .add-cart-btn { flex: 1; max-width: 240px; }
+    @media (max-width: 480px) { flex-wrap: wrap; }
+
+    .cart-btn { flex: 1; max-width: 240px; font-weight: 600; }
   }
 }
 </style>

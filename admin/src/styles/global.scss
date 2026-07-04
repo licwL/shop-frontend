@@ -1,15 +1,32 @@
 // 全局样式
-// variables.scss 已通过 vite additionalData 全局注入，此处可写全局覆盖
+// variables.scss 已通过 vite additionalData 全局注入
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body, #app {
   height: 100%;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
   color: $text-primary;
   background: $bg-page;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+// Element Plus 全局微调
+.el-card { border-radius: $radius; border: 1px solid $border-color; }
+.el-button--primary { font-weight: 500; }
+.el-table {
+  --el-table-header-bg-color: #F8F9FC;
+  --el-table-row-hover-bg-color: #F5F6FA;
+}
+.el-table th.el-table__cell { font-weight: 600; color: $text-secondary; font-size: 13px; }
+
+// 过渡动画
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+// 滚动条
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
