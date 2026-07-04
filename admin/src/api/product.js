@@ -29,7 +29,6 @@ export function deleteProducts(ids) {
 export function uploadImage(file) {
   const formData = new FormData()
   formData.append('file', file)
-  return request.post('/admin/common/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  // 不手动设 Content-Type，让 axios 自动带 boundary
+  return request.post('/admin/common/upload', formData)
 }

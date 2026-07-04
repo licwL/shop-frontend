@@ -1,25 +1,35 @@
 // ==========================================
-// 主题色：奶油杏暖调 (Cream Apricot Warm)
+// 主题色：现代简约风（美妆+服装+3C 综合电商）
+// 灰底 + 蓝紫主色 — 干净、专业、品质感
 // ==========================================
 
 // ----- Element Plus 主题覆盖 -----
-$--el-color-primary: #D4845A;          // 主色：奶油杏棕
-$--el-color-primary-light-3: #DEA07E;  // 浅杏
-$--el-color-primary-light-5: #E7B99F;  // 更浅
-$--el-color-primary-light-7: #F0D3C1;  // 极浅
-$--el-color-primary-light-8: #F5E2D5;  // 背景级
-$--el-color-primary-light-9: #FAF0EA;  // 卡片底色
-$--el-color-primary-dark-2: #B56E45;
+$--el-color-primary: #5B6ABF;          // 主色：靛蓝紫
+$--el-color-primary-light-3: #7C89CF;  // 浅蓝紫
+$--el-color-primary-light-5: #9DA7DF;  // 更浅
+$--el-color-primary-light-7: #BFC5EF;  // 极浅
+$--el-color-primary-light-8: #D9DCF5;  // 背景级
+$--el-color-primary-light-9: #EDEEFA;  // 卡片底色
+$--el-color-primary-dark-2: #4A59A8;   // hover 深色
+
+// ----- 语义色 -----
+$accent: #E8805A;                       // 暖橙 — 价格、CTA
+$accent-light: #FEF0EA;                 // 暖橙浅底
+$danger: #E05555;                       // 删除/取消
+$success: #52A97E;                      // 成功绿
 
 // ----- 页面用 -----
-$bg-page: #FFF8F3;                     // 页面底色（暖白）
-$bg-card: #FFFFFF;                     // 卡片白
-$bg-sidebar: #2C241E;                  // 侧边栏深色
-$text-primary: #3A3028;                // 主文字
-$text-secondary: #8B7D72;              // 次要文字
-$border-color: #F0E4DA;                // 边框暖调
+$bg-page: #F5F6FA;                      // 浅灰底
+$bg-card: #FFFFFF;                      // 卡片白
+$bg-sidebar: #1E2130;                   // 侧边栏深色
+$text-primary: #1D1F2A;                 // 主文字
+$text-secondary: #8A8D99;               // 次要文字
+$border-color: #E8E9ED;                 // 边框
 
 // ----- 布局 -----
 $sidebar-width: 220px;
 $header-height: 56px;
 $radius: 8px;
+$radius-sm: 4px;
+$shadow-card: 0 2px 12px rgba(0,0,0,0.04);
+$shadow-hover: 0 6px 24px rgba(0,0,0,0.08);

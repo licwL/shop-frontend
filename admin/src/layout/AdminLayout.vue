@@ -12,10 +12,6 @@
         text-color="#BFB1A5"
         active-text-color="#D4845A"
       >
-        <el-menu-item index="/dashboard">
-          <el-icon><Odometer /></el-icon>
-          <span>数据看板</span>
-        </el-menu-item>
         <el-menu-item index="/employee">
           <el-icon><UserFilled /></el-icon>
           <span>员工管理</span>
@@ -64,7 +60,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { UserFilled, Grid, Goods, Document, Avatar, Bell, Odometer } from '@element-plus/icons-vue'
+import { UserFilled, Grid, Goods, Document, Avatar, Bell } from '@element-plus/icons-vue'
 import { clearToken } from '@shared/request'
 import { logout } from '@/api/employee'
 

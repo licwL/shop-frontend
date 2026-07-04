@@ -11,15 +11,9 @@ const routes = [
   {
     path: '/',
     component: () => import('@/layout/AdminLayout.vue'),
-    redirect: '/dashboard',
+    redirect: '/employee',
     meta: { requiresAuth: true },
     children: [
-      {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/dashboard/DashboardView.vue'),
-        meta: { title: '数据看板', requiresAuth: true },
-      },
       {
         path: 'employee',
         name: 'Employee',
