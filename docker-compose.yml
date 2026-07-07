@@ -1,0 +1,83 @@
+# ==========================================
+# Docker Compose — 电商平台一键部署
+# 启动: docker-compose up -d
+# 停止: docker-compose down
+# 查看: docker-compose ps
+# 日志: docker-compose logs -f <service>
+# ==========================================
+
+version: '3.8'
+
+services:
+  # --------------------------------------------------
+  # MySQL 8.0 数据库
+  # --------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: shop-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: shop
+      MYSQL_USER: shop
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - ../shop-backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: always
+    command: [
+      '--character-set-server=utf8mb4',
+      '--collation-server=utf8mb4_general_ci',
+      '--default-time-zone=+08:00'
+    ]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # --------------------------------------------------
+  # Spring Boot 后端
+  # --------------------------------------------------
+  backend:
+    build: ../shop-backend/server
+    container_name: shop-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Shanghai
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: shop
+      DB_USER: shop
+      DB_PASSWORD: ${DB_PASSWORD}
+      OSS_ENDPOINT: ${OSS_ENDPOINT}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET}
+      OSS_BUCKET_NAME: ${OSS_BUCKET_NAME}
+    ports:
+      - "8080:8080"
+    restart: always
+
+  # --------------------------------------------------
+  # Nginx 前端 + 反向代理
+  # --------------------------------------------------
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: shop-nginx
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+
+volumes:
+  mysql_data:

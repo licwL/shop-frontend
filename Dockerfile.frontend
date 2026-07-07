@@ -1,0 +1,19 @@
+# ==========================================
+# 前端 Nginx 镜像
+# 构建前需先执行: cd admin && npm run build && cd ../user && npm run build
+# ==========================================
+FROM nginx:alpine
+
+# 用户端 → /usr/share/nginx/html (根路径)
+COPY user/dist /usr/share/nginx/html
+
+# 管理端 → /usr/share/nginx/html/admin
+COPY admin/dist /usr/share/nginx/html/admin
+
+# Nginx 配置
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD wget -qO- http://localhost/health || exit 1
