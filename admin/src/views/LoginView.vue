@@ -4,6 +4,7 @@
       <div class="card-header">
         <h1 class="title">电商管理后台</h1>
         <p class="subtitle">请登录您的账号</p>
+        <p class="student-info">李崇文 24120320</p>
       </div>
 
       <el-form
@@ -126,6 +127,12 @@ async function handleLogin() {
     .subtitle {
       font-size: 14px;
       color: $text-secondary;
+    }
+
+    .student-info {
+      font-size: 12px;
+      color: $text-muted;
+      margin-top: 2px;
     }
   }
 

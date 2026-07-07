@@ -19,6 +19,7 @@
         <el-menu-item index="/user"><el-icon><Avatar /></el-icon><span>用户管理</span></el-menu-item>
         <el-menu-item index="/notice"><el-icon><Bell /></el-icon><span>公告管理</span></el-menu-item>
       </el-menu>
+      <div class="sidebar-footer">李崇文 24120320</div>
     </el-aside>
 
     <!-- 移动端遮罩 -->
@@ -72,6 +73,7 @@ async function handleLogout() {
 
 // ---- Sidebar ----
 .aside {
+  position: relative;
   background: $bg-sidebar;
   overflow-y: auto;
   transition: transform 0.3s;
@@ -103,6 +105,13 @@ async function handleLogout() {
 }
 
 .el-menu { border-right: none; }
+
+.sidebar-footer {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 14px; text-align: center;
+  font-size: 12px; color: rgba(255,255,255,0.35);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
 
 // ---- Header ----
 .header {

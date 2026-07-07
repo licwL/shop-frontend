@@ -3,6 +3,7 @@
     <div class="login-card">
       <h1 class="logo-text">MALL</h1>
       <p class="sub">注册新账号</p>
+      <p class="student-info">李崇文 24120320</p>
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="form.phone" placeholder="请输入手机号" maxlength="11" size="large" />
@@ -111,6 +112,7 @@ onMounted(() => refreshCaptcha())
     font-family: 'DM Serif Display', serif;
   }
   .sub { font-size: 14px; color: $text-secondary; margin-bottom: 20px; }
+	  .student-info { font-size: 12px; color: $text-muted; margin-top: -14px; margin-bottom: 6px; }
   :deep(.el-form-item) { margin-bottom: 14px; }
   :deep(.el-form-item__label) { padding-bottom: 2px; }
   .login-btn { width: 100%; height: 44px; font-size: 15px; letter-spacing: 6px; font-weight: 600; margin-top: 4px; }

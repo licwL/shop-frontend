@@ -3,6 +3,7 @@
     <div class="login-card">
       <h1 class="logo-text">MALL</h1>
       <p class="sub">登录您的账号</p>
+      <p class="student-info">李崇文 24120320</p>
       <el-form ref="formRef" :model="form" :rules="rules" @keyup.enter="handleLogin">
         <el-form-item prop="phone">
           <el-input v-model="form.phone" placeholder="手机号" maxlength="11" size="large" />
@@ -76,6 +77,7 @@ async function handleLogin() {
     font-family: 'DM Serif Display', serif;
   }
   .sub { font-size: 14px; color: $text-secondary; margin-bottom: 28px; }
+	  .student-info { font-size: 12px; color: $text-muted; margin-top: -22px; margin-bottom: 6px; }
   .login-btn { width: 100%; height: 44px; font-size: 15px; letter-spacing: 6px; font-weight: 600; }
   .extra { margin-top: 16px; }
   .link { font-size: 13px; color: $--el-color-primary; cursor: pointer; &:hover { text-decoration: underline; } }

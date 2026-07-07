@@ -57,6 +57,7 @@
     <!-- 页脚 -->
     <footer class="site-footer">
       <span>© 2026 MALL</span>
+      <span class="student-info">李崇文 24120320</span>
     </footer>
   </div>
 </template>
@@ -220,5 +221,6 @@ onMounted(() => { fetchUnread(); setInterval(fetchUnread, 30000) })
   font-weight: 500;
   color: $text-secondary;
   border-top: 1px solid $border-color;
+	.student-info { margin-left: 12px; color: $text-muted; }
 }
 </style>
