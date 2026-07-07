@@ -2,8 +2,7 @@
 
 > B2C 电商平台的前端仓库，含管理端（后台系统）和用户端（购物商城）。覆盖美妆护肤、服饰鞋包、数码家电三大品类。
 
-**线上地址**：[https://bithaze.online](https://bithaze.online)  
-**管理端**：[https://bithaze.online/admin/](https://bithaze.online/admin/)（演示账号 `admin` / `123456`）
+> 演示账号 `admin` / `123456`
 
 ---
 
@@ -113,7 +112,7 @@ docker compose up -d
 
 | 项目 | 地址 |
 |------|------|
-| 后端 Spring Boot | [github.com/licwL/commercial](https://github.com/licwL/commercial) |
+| 后端 Spring Boot | [github.com/licwL/shop-backend](https://github.com/licwL/shop-backend) |
 
 ## License
 
