@@ -4,12 +4,16 @@
     <div class="profile-layout">
       <div class="side-menu">
         <div class="avatar-box">
-          <el-avatar :size="60" :src="info.avatar"><el-icon :size="28"><UserFilled /></el-icon></el-avatar>
+          <div class="avatar-wrap" @click="avatarInput?.click()">
+            <el-avatar :size="60" :src="info.avatar"><el-icon :size="28"><UserFilled /></el-icon></el-avatar>
+            <div class="avatar-overlay"><el-icon :size="16"><Camera /></el-icon></div>
+          </div>
+          <input ref="avatarInput" type="file" accept="image/*" hidden @change="handleAvatarUpload" />
           <div class="uname">{{ info.name || '未设置' }}</div>
         </div>
         <div class="menu-item active">基本信息</div>
+        <div class="menu-item" @click="$router.push('/favorites')">我的收藏</div>
         <div class="menu-item" @click="$router.push('/address')">收货地址</div>
-        <div class="menu-item" @click="$router.push('/orders')">我的订单</div>
         <div class="menu-item danger" @click="logout">退出登录</div>
       </div>
 
@@ -41,14 +45,30 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { UserFilled } from '@element-plus/icons-vue'
+import { UserFilled, Camera } from '@element-plus/icons-vue'
 import { clearToken } from '@shared/request'
-import { getUserInfo, updateUserInfo } from '@/api/user'
+import { getUserInfo, updateUserInfo, uploadAvatar } from '@/api/user'
 
 const router = useRouter()
 const info = reactive({ name: '', phone: '', sex: '', avatar: '', createTime: '' })
 const en = ref(false); const es = ref(false)
 const ename = ref(''); const esex = ref('')
+const avatarInput = ref(null)
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 2 * 1024 * 1024) { ElMessage.error('图片不能超过2MB'); return }
+  try {
+    const res = await uploadAvatar(file)
+    const url = res.data
+    await updateUserInfo({ name: info.name, sex: info.sex, avatar: url })
+    info.avatar = url
+    ElMessage.success('头像已更新')
+  } catch { /* ignore */ } finally {
+    e.target.value = ''
+  }
+}
 
 async function load() { try { Object.assign(info, (await getUserInfo()).data) } catch { /* ignore */ } }
 
@@ -64,7 +84,7 @@ async function toggleSex() {
   es.value = !es.value
 }
 
-function logout() { clearToken(); localStorage.clear(); router.push('/login') }
+function logout() { clearToken(); ['token','userId','userName'].forEach(k => localStorage.removeItem(k)); router.push('/') }
 const fmt = v => v ? new Date(v).toLocaleString('zh-CN') : '-'
 
 onMounted(() => load())
@@ -73,12 +93,20 @@ onMounted(() => load())
 <style scoped lang="scss">
 .page-title { font-size: 24px; margin-bottom: 20px; }
 
-.profile-layout { display: flex; gap: 24px; @media (max-width: 640px) { flex-direction: column; } }
+.profile-layout { display: flex; gap: 24px; @media (max-width: $bp-small) { flex-direction: column; } }
 
 .side-menu {
   width: 180px; flex-shrink: 0; background: $bg-card; border-radius: $radius; padding: 20px 0;
 
   .avatar-box { text-align: center; padding-bottom: 14px; margin-bottom: 6px; border-bottom: 1px solid $border-color;
+    .avatar-wrap { position: relative; display: inline-block; cursor: pointer;
+      &:hover .avatar-overlay { opacity: 1; }
+    }
+    .avatar-overlay {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center;
+      color: #fff; opacity: 0; transition: opacity 0.2s;
+    }
     .uname { margin-top: 8px; font-weight: 600; font-size: 14px; color: $text-primary; }
   }
   .menu-item { padding: 11px 20px; font-size: 14px; color: $text-secondary; cursor: pointer; font-weight: 500;

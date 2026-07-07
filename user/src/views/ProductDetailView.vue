@@ -1,5 +1,9 @@
 <template>
   <div class="page-container">
+    <div class="back-bar" @click="$router.back()">
+      <el-icon><ArrowLeft /></el-icon>
+      <span>返回</span>
+    </div>
     <div class="detail-layout" v-loading="loading">
       <template v-if="product">
         <!-- 左图 -->
@@ -39,14 +43,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { PictureFilled, Star, StarFilled, ShoppingCart } from '@element-plus/icons-vue'
+import { ArrowLeft, PictureFilled, Star, StarFilled, ShoppingCart } from '@element-plus/icons-vue'
+import { getToken } from '@shared/request'
 import { getProductDetail } from '@/api/product'
 import { addToCart } from '@/api/cart'
 import { addFavorite, removeFavorite, getFavoriteList } from '@/api/favorite'
 
 const route = useRoute()
+const router = useRouter()
 const product = ref(null)
 const loading = ref(false)
 const faved = ref(false)
@@ -61,7 +67,16 @@ async function checkFav() {
   try { faved.value = ((await getFavoriteList()).data || []).some(f => f.productId === product.value?.id) } catch { /* ignore */ }
 }
 
+function requireLogin() {
+  if (!getToken()) {
+    router.push(`/login?redirect=/product/${product.value.id}`)
+    return false
+  }
+  return true
+}
+
 async function toggleFav() {
+  if (!requireLogin()) return
   try {
     faved.value ? (await removeFavorite(product.value.id), ElMessage.success('已取消收藏')) : (await addFavorite(product.value.id), ElMessage.success('已收藏'))
     faved.value = !faved.value
@@ -69,13 +84,35 @@ async function toggleFav() {
 }
 
 async function add() {
-  try { await addToCart({ productId: product.value.id, amount: product.value.price }); ElMessage.success(`已添加 ${quantity.value} 件`) } catch { /* ignore */ }
+  if (!requireLogin()) return
+  try {
+    const qty = quantity.value
+    await Promise.all(Array.from({ length: qty }, () =>
+      addToCart({ productId: product.value.id, amount: product.value.price })))
+    ElMessage.success(`已添加 ${qty} 件`)
+    router.back()
+  } catch { /* ignore */ }
 }
 
 onMounted(() => load())
 </script>
 
 <style scoped lang="scss">
+.back-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: $text-secondary;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  padding: 4px 0;
+  width: fit-content;
+  transition: color 0.2s;
+
+  &:hover { color: $--el-color-primary; }
+}
+
 .detail-layout {
   display: flex;
   gap: 36px;
@@ -83,7 +120,7 @@ onMounted(() => load())
   border-radius: $radius;
   padding: 28px;
 
-  @media (max-width: 768px) { flex-direction: column; gap: 20px; padding: 16px; }
+  @media (max-width: $bp-mobile) { flex-direction: column; gap: 20px; padding: 16px; }
 }
 
 .img-section {
@@ -97,7 +134,7 @@ onMounted(() => load())
   align-items: center;
   justify-content: center;
 
-  @media (max-width: 768px) { width: 100%; aspect-ratio: 1; height: auto; }
+  @media (max-width: $bp-mobile) { width: 100%; aspect-ratio: 1; height: auto; }
 
   .main-img { width: 100%; height: 100%; }
   .img-empty { color: $--el-color-primary-light-5; }
@@ -116,7 +153,7 @@ onMounted(() => load())
     line-height: 1.35;
     margin-bottom: 12px;
 
-    @media (max-width: 768px) { font-size: 20px; }
+    @media (max-width: $bp-mobile) { font-size: 20px; }
   }
 
   .meta {

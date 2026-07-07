@@ -84,6 +84,8 @@
 import { ref, reactive, computed, nextTick, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Pagination from '@shared/components/Pagination.vue'
+import { formatTime } from '@shared/utils'
+import { usePaginationList } from '@shared/composables/usePaginationList'
 import {
   getCategoryPage,
   addCategory,
@@ -93,11 +95,10 @@ import {
 } from '@/api/category'
 
 // ---- 列表状态 ----
-const tableData = ref([])
-const total = ref(0)
-const loading = ref(false)
 const searchName = ref('')
-const pagination = reactive({ page: 1, pageSize: 10 })
+const { list: tableData, total, loading, pagination, fetchList, search: handleSearch } = usePaginationList(
+  (page, pageSize) => getCategoryPage({ page, pageSize, name: searchName.value || undefined })
+)
 
 // ---- 弹窗状态 ----
 const dialogVisible = ref(false)
@@ -115,29 +116,6 @@ const form = reactive({
 
 const rules = {
   name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }],
-}
-
-// ---- 数据请求 ----
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await getCategoryPage({
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      name: searchName.value || undefined,
-    })
-    tableData.value = res.data.records ?? []
-    total.value = res.data.total ?? 0
-  } catch {
-    // 拦截器已处理
-  } finally {
-    loading.value = false
-  }
-}
-
-function handleSearch() {
-  pagination.page = 1
-  fetchList()
 }
 
 // ---- 弹窗操作 ----
@@ -209,12 +187,6 @@ async function handleStatusChange(row, newValue) {
   } catch {
     // 错误时开关不会变化（单向绑定）
   }
-}
-
-// ---- 工具 ----
-function formatTime(val) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN')
 }
 
 onMounted(() => {

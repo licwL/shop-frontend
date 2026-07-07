@@ -36,38 +36,18 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import Pagination from '@shared/components/Pagination.vue'
+import { formatTime } from '@shared/utils'
+import { usePaginationList } from '@shared/composables/usePaginationList'
 import { getUserPage, setUserStatus } from '@/api/user'
 
-const tableData = ref([])
-const total = ref(0)
-const loading = ref(false)
 const searchName = ref('')
 const searchPhone = ref('')
-const pagination = reactive({ page: 1, pageSize: 10 })
-
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await getUserPage({
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      name: searchName.value || undefined,
-      phone: searchPhone.value || undefined,
-    })
-    tableData.value = res.data.records ?? []
-    total.value = res.data.total ?? 0
-  } catch { /* 拦截器已处理 */ } finally {
-    loading.value = false
-  }
-}
-
-function handleSearch() {
-  pagination.page = 1
-  fetchList()
-}
+const { list: tableData, total, loading, pagination, fetchList, search: handleSearch } = usePaginationList(
+  (page, pageSize) => getUserPage({ page, pageSize, name: searchName.value || undefined, phone: searchPhone.value || undefined })
+)
 
 async function handleStatusChange(row, newValue) {
   const newStatus = newValue ? 1 : 0
@@ -76,11 +56,6 @@ async function handleStatusChange(row, newValue) {
     ElMessage.success(newStatus === 1 ? '已启用' : '已禁用')
     fetchList()
   } catch { /* 错误时开关不变 */ }
-}
-
-function formatTime(val) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN')
 }
 
 onMounted(() => {

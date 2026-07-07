@@ -6,6 +6,7 @@ const adminRoot = resolve(__dirname)
 const sharedStyles = resolve(adminRoot, '../shared/styles/variables.scss')
 
 export default defineConfig({
+  base: '/admin/',
   plugins: [vue()],
   resolve: {
     alias: [
@@ -25,7 +26,11 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/admin': 'http://localhost:8080',
+      '/api/admin': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       '/user': 'http://localhost:8080',
       '/health': 'http://localhost:8080',
     },

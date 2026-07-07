@@ -17,6 +17,36 @@
           <el-button type="primary" size="large" @click="search">搜索</el-button>
         </div>
 
+        <!-- 公告横幅 -->
+        <div v-if="notices.length" class="notice-bar">
+          <div class="notice-inner">
+            <el-icon class="notice-icon"><Bell /></el-icon>
+            <div class="notice-scroll">
+              <div class="notice-track" :style="{ transform: 'translateX(-' + noticeOffset + 'px)' }">
+                <span v-for="n in loopNotices" :key="n.id" class="notice-item">{{ n.title }}</span>
+              </div>
+            </div>
+            <el-button text size="small" type="primary" class="notice-more" @click="showNotices = true">查看全部</el-button>
+          </div>
+        </div>
+
+        <!-- 公告弹窗 -->
+        <el-dialog v-model="showNotices" title="平台公告" width="520px">
+          <div
+            v-for="n in notices" :key="n.id"
+            class="notice-dialog-item" :class="{ expanded: expandedId === n.id }"
+            @click="expandedId = expandedId === n.id ? null : n.id"
+          >
+            <div class="ndi-head">
+              <span class="ndi-title">{{ n.title }}</span>
+              <span class="ndi-time">{{ n.createTime?.slice(0,10) }}</span>
+            </div>
+            <div class="ndi-body" v-show="expandedId === n.id">
+              <div class="ndi-content">{{ n.content }}</div>
+            </div>
+          </div>
+        </el-dialog>
+
         <!-- 移动端分类滚动 -->
         <div class="cats-scroll">
           <span class="cs-item" :class="{ active: !activeCid }" @click="activeCid = null; search()">全部</span>
@@ -50,10 +80,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Search, PictureFilled } from '@element-plus/icons-vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Search, PictureFilled, Bell } from '@element-plus/icons-vue'
 import Pagination from '@shared/components/Pagination.vue'
 import { getProductPage } from '@/api/product'
+import { getNoticePage } from '@/api/notice'
+
+defineOptions({ name: 'HomeView' })
 
 const list = ref([])
 const total = ref(0)
@@ -64,11 +97,42 @@ const page = ref(1)
 const pageSize = ref(20)
 const categories = ref([])
 
+// 公告
+const notices = ref([])
+const showNotices = ref(false)
+const expandedId = ref(null)
+const noticeOffset = ref(0)
+const loopNotices = computed(() => [...notices.value, ...notices.value])
+
+async function loadNotices() {
+  try {
+    const r = await getNoticePage({ page: 1, pageSize: 5 })
+    notices.value = (r.data?.records || []).filter(n => n.status === 1)
+  } catch { /* ignore */ }
+}
+
+// 公告滚轮
+let noticeTimer = null
+function startNoticeScroll() {
+  if (notices.value.length <= 1) return
+  noticeTimer = setInterval(() => {
+    noticeOffset.value += 1
+    const singleWidth = 300
+    if (noticeOffset.value >= notices.value.length * singleWidth) {
+      noticeOffset.value = 0
+    }
+  }, 40)
+}
+onMounted(() => { loadNotices().then(() => { if (notices.value.length > 1) startNoticeScroll() }) })
+onUnmounted(() => { clearInterval(noticeTimer) })
+
 async function loadCats() {
   try {
     const res = await getProductPage({ page: 1, pageSize: 200 })
     const map = new Map()
-    ;(res.data.records || []).forEach(p => { if (p.categoryId && p.categoryName) map.set(p.categoryId, { id: p.categoryId, name: p.categoryName }) })
+    ;(res.data.records || []).forEach(p => {
+      if (p.categoryId && p.categoryName) map.set(p.categoryId, { id: p.categoryId, name: p.categoryName })
+    })
     categories.value = Array.from(map.values())
   } catch { /* ignore */ }
 }
@@ -106,7 +170,7 @@ onMounted(() => { loadCats(); fetchList() })
   position: sticky;
   top: 72px;
 
-  @media (max-width: 768px) { display: none; }
+  @media (max-width: $bp-mobile) { display: none; }
 }
 
 .side-title { font-size: 15px; padding: 0 18px 12px; border-bottom: 1px solid $border-color; margin-bottom: 4px; color: $text-primary; }
@@ -125,13 +189,99 @@ onMounted(() => { loadCats(); fetchList() })
 // ---- Content ----
 .content { flex: 1; min-width: 0; }
 
+// 公告横幅
+.notice-bar {
+  margin-bottom: 14px;
+  background: linear-gradient(90deg, #{$--el-color-primary-light-9}, #{$bg-card});
+  border: 1px solid $--el-color-primary-light-7;
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.notice-inner {
+  display: flex;
+  align-items: center;
+  padding: 9px 14px;
+  gap: 10px;
+}
+
+.notice-icon {
+  color: $--el-color-primary;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.notice-scroll {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 20px;
+}
+
+.notice-track {
+  display: flex;
+  gap: 300px;
+  transition: transform 0.04s linear;
+  white-space: nowrap;
+}
+
+.notice-item {
+  font-size: 13px;
+  color: $text-primary;
+  min-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-more {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.notice-dialog-item {
+  padding: 12px 0;
+  border-bottom: 1px solid $border-color;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: $bg-page; margin: 0 -16px; padding: 12px 16px; border-radius: $radius-sm; }
+
+  .ndi-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .ndi-title {
+    font-size: 14px; font-weight: 500; color: $text-primary; flex: 1;
+
+    &::before { content: '▸'; margin-right: 6px; font-size: 10px; color: $--el-color-primary; transition: transform 0.2s; display: inline-block; }
+  }
+
+  &.expanded .ndi-title::before { transform: rotate(90deg); }
+
+  .ndi-time { font-size: 12px; color: $text-secondary; flex-shrink: 0; }
+
+  .ndi-body {
+    margin-top: 10px;
+    padding: 12px 14px;
+    background: $bg-page;
+    border-radius: $radius-sm;
+  }
+
+  .ndi-content { font-size: 13px; color: $text-secondary; line-height: 1.8; }
+}
+
 .search-row {
   display: flex;
   gap: 10px;
   margin-bottom: 16px;
 
   .search-inp { width: 320px; }
-  @media (max-width: 640px) { .search-inp { width: auto; flex: 1; } }
+  @media (max-width: $bp-small) { .search-inp { width: auto; flex: 1; } }
 }
 
 // 移动端分类
@@ -142,7 +292,7 @@ onMounted(() => { loadCats(); fetchList() })
   padding-bottom: 8px;
   margin-bottom: 12px;
 
-  @media (max-width: 768px) { display: flex; }
+  @media (max-width: $bp-mobile) { display: flex; }
 
   .cs-item {
     flex-shrink: 0;
@@ -165,8 +315,8 @@ onMounted(() => { loadCats(); fetchList() })
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 
-  @media (max-width: 1024px) { grid-template-columns: repeat(3, 1fr); }
-  @media (max-width: 640px) { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (max-width: $bp-tablet) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: $bp-small) { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
 
 .product-card {

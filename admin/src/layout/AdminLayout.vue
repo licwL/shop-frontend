@@ -54,7 +54,8 @@ const router = useRouter()
 const route = useRoute()
 const sidebarOpen = ref(true)
 
-const isMobile = computed(() => window.innerWidth < 768)
+const MOBILE_BP = 768
+const isMobile = computed(() => window.innerWidth < MOBILE_BP)
 const sidebarWidth = computed(() => isMobile.value ? '220px' : '220px')
 
 const activeMenu = computed(() => route.path)
@@ -62,7 +63,7 @@ const userName = localStorage.getItem('userName') || '管理员'
 
 async function handleLogout() {
   try { await logout() } catch { /* ignore */ }
-  clearToken(); localStorage.clear(); router.push('/login')
+  clearToken(); ['token','userId','userName'].forEach(k => localStorage.removeItem(k)); router.push('/login')
 }
 </script>
 
@@ -76,7 +77,7 @@ async function handleLogout() {
   transition: transform 0.3s;
   z-index: 200;
 
-  @media (max-width: 768px) {
+  @media (max-width: $bp-mobile) {
     position: fixed; left: 0; top: 0; bottom: 0;
     transform: translateX(-100%);
     &.collapsed { transform: translateX(0); }
@@ -110,7 +111,7 @@ async function handleLogout() {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 20px;
 
-  @media (max-width: 768px) { padding: 0 14px; }
+  @media (max-width: $bp-mobile) { padding: 0 14px; }
 }
 
 .header-left {
@@ -123,7 +124,7 @@ async function handleLogout() {
   background: none; border: none; cursor: pointer;
   flex-direction: column; justify-content: space-between; padding: 0;
 
-  @media (max-width: 768px) { display: flex; }
+  @media (max-width: $bp-mobile) { display: flex; }
 
   span {
     display: block; height: 2px; background: $text-primary; border-radius: 2px; transition: 0.25s;
@@ -142,5 +143,5 @@ async function handleLogout() {
 .user-name { font-size: 13px; color: $text-secondary; font-weight: 500; }
 
 // ---- Main ----
-.main { background: $bg-page; padding: 20px; @media (max-width: 768px) { padding: 14px; } }
+.main { background: $bg-page; padding: 20px; @media (max-width: $bp-mobile) { padding: 14px; } }
 </style>

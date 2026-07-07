@@ -18,6 +18,7 @@
             v-model="form.username"
             placeholder="请输入用户名"
             :prefix-icon="User"
+            maxlength="32"
           />
         </el-form-item>
 
@@ -28,6 +29,7 @@
             placeholder="请输入密码"
             show-password
             :prefix-icon="Lock"
+            maxlength="64"
           />
         </el-form-item>
 
@@ -85,7 +87,8 @@ async function handleLogin() {
     localStorage.setItem('userId', res.data.id)
     localStorage.setItem('userName', res.data.name)
     ElMessage.success('登录成功')
-    router.push(route.query.redirect || '/')
+    const redirect = route.query.redirect
+    router.push(redirect && redirect.startsWith('/') ? redirect : '/')
   } catch {
     // 错误已由拦截器处理
   } finally {

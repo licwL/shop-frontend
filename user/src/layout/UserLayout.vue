@@ -8,11 +8,20 @@
         <!-- 桌面导航 -->
         <nav class="nav-desktop">
           <router-link to="/home" class="nav-link">首页</router-link>
-          <router-link to="/cart" class="nav-link cart-link">
-            购物车 <span v-if="cartCount" class="badge">{{ cartCount > 99 ? '99+' : cartCount }}</span>
-          </router-link>
-          <router-link to="/orders" class="nav-link">订单</router-link>
-          <router-link to="/profile" class="nav-link">我的</router-link>
+          <template v-if="loggedIn">
+            <router-link to="/cart" class="nav-link cart-link">
+              购物车 <span v-if="cartCount" class="badge">{{ cartCount > 99 ? '99+' : cartCount }}</span>
+            </router-link>
+            <router-link to="/orders" class="nav-link">订单</router-link>
+            <router-link to="/notifications" class="nav-link notify-link">
+              通知 <span v-if="unreadCount" class="badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+            </router-link>
+            <router-link to="/profile" class="nav-link">我的</router-link>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="nav-link">登录</router-link>
+            <router-link to="/register" class="nav-link">注册</router-link>
+          </template>
         </nav>
 
         <!-- 移动端汉堡 -->
@@ -24,15 +33,25 @@
       <!-- 移动端下拉菜单 -->
       <nav class="nav-mobile" :class="{ open: mobileOpen }">
         <router-link to="/home" class="mob-link" @click="mobileOpen = false">首页</router-link>
-        <router-link to="/cart" class="mob-link" @click="mobileOpen = false">购物车</router-link>
-        <router-link to="/orders" class="mob-link" @click="mobileOpen = false">我的订单</router-link>
-        <router-link to="/profile" class="mob-link" @click="mobileOpen = false">个人中心</router-link>
+        <template v-if="loggedIn">
+          <router-link to="/cart" class="mob-link" @click="mobileOpen = false">购物车</router-link>
+          <router-link to="/orders" class="mob-link" @click="mobileOpen = false">我的订单</router-link>
+          <router-link to="/profile" class="mob-link" @click="mobileOpen = false">个人中心</router-link>
+        </template>
+        <template v-else>
+          <router-link to="/login" class="mob-link" @click="mobileOpen = false">登录</router-link>
+          <router-link to="/register" class="mob-link" @click="mobileOpen = false">注册</router-link>
+        </template>
       </nav>
     </header>
 
     <!-- 主内容 -->
     <main class="main-area">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <keep-alive include="HomeView">
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
     </main>
 
     <!-- 页脚 -->
@@ -43,10 +62,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { getToken } from '@shared/request'
+import { getUnreadCount } from '@/api/notification'
 
+const router = useRouter()
+const loggedIn = ref(!!getToken())
 const cartCount = ref(0)
+const unreadCount = ref(0)
 const mobileOpen = ref(false)
+
+// 每次路由变化后重新检查登录状态
+watch(() => router.currentRoute.value, () => { loggedIn.value = !!getToken() })
+
+async function fetchUnread() {
+  if (!loggedIn.value) return
+  try { unreadCount.value = (await getUnreadCount()).data ?? 0 } catch { /* ignore */ }
+}
+
+onMounted(() => { fetchUnread(); setInterval(fetchUnread, 30000) })
 </script>
 
 <style scoped lang="scss">
@@ -90,7 +125,7 @@ const mobileOpen = ref(false)
   align-items: center;
   gap: 36px;
 
-  @media (max-width: 640px) { display: none; }
+  @media (max-width: $bp-small) { display: none; }
 }
 
 .nav-link {
@@ -135,7 +170,7 @@ const mobileOpen = ref(false)
   justify-content: space-between;
   padding: 0;
 
-  @media (max-width: 640px) { display: flex; }
+  @media (max-width: $bp-small) { display: flex; }
 
   span {
     display: block;

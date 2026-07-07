@@ -42,9 +42,10 @@
           <tr v-for="o in orders" :key="o.id">
             <td class="mono">{{ o.number }}</td>
             <td class="op">¥{{ o.amount?.toFixed(2) }}</td>
-            <td><el-tag :type="tt(o.status)" size="small">{{ ORDER_STATUS[o.status] || '未知' }}</el-tag></td>
-            <td class="ot">{{ fmt(o.orderTime) }}</td>
+            <td><el-tag :type="orderStatusType(o.status)" size="small">{{ orderStatusText(o.status) }}</el-tag></td>
+            <td class="ot">{{ formatTime(o.orderTime) }}</td>
             <td>
+              <el-button size="small" @click="handleDetail(o.id)">详情</el-button>
               <el-button size="small" v-if="o.status === 1" type="primary" @click="pay(o.id)">支付</el-button>
               <el-button size="small" v-if="o.status === 1 || o.status === 2" @click="cancel(o.id)">取消</el-button>
             </td>
@@ -54,6 +55,23 @@
       <div class="pager" v-if="ototal > psize">
         <Pagination v-model:page="pg" v-model:page-size="psize" :total="ototal" @change="loadOrders" />
       </div>
+
+      <!-- 订单详情抽屉 -->
+      <el-drawer v-model="drawerVisible" title="订单详情" size="420px">
+        <template v-if="detail">
+          <div class="detail-num">订单号: {{ detail.number }}</div>
+          <div class="detail-items">
+            <div v-for="item in detail.orderDetailList" :key="item.id" class="di-row">
+              <el-image v-if="item.image" :src="item.image" fit="cover" class="di-img" />
+              <div v-else class="di-img-empty"><el-icon :size="20"><PictureFilled /></el-icon></div>
+              <div class="di-info">
+                <div class="di-name">{{ item.name }}</div>
+                <div class="di-meta">x{{ item.number }} <span class="di-price">¥{{ item.amount?.toFixed(2) }}</span></div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </el-drawer>
     </template>
   </div>
 </template>
@@ -62,10 +80,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ORDER_STATUS } from '@shared/utils'
+import { PictureFilled } from '@element-plus/icons-vue'
+import { ORDER_STATUS, orderStatusText, orderStatusType, formatTime } from '@shared/utils'
 import Pagination from '@shared/components/Pagination.vue'
 import { getCartList } from '@/api/cart'
-import { submitOrder, getOrderPage, cancelOrder, payOrder } from '@/api/order'
+import { submitOrder, getOrderPage, getOrderDetail, cancelOrder, payOrder } from '@/api/order'
 import { getAddressList } from '@/api/address'
 
 const route = useRoute()
@@ -94,6 +113,7 @@ async function doSubmit() {
 // 列表
 const orders = ref([]); const ototal = ref(0); const loading = ref(false)
 const st = ref(null); const pg = ref(1); const psize = ref(10)
+const drawerVisible = ref(false); const detail = ref(null)
 const tabs = [{ l: '全部', v: null }, { l: '待付款', v: 1 }, { l: '已付款', v: 2 }, { l: '已发货', v: 3 }, { l: '已完成', v: 4 }]
 
 async function loadOrders() {
@@ -102,10 +122,17 @@ async function loadOrders() {
 }
 function search() { pg.value = 1; loadOrders() }
 async function pay(id) { try { await payOrder(id); ElMessage.success('支付成功'); loadOrders() } catch { /* ignore */ } }
-async function cancel(id) { try { await ElMessageBox.prompt('取消原因', '取消订单'); await cancelOrder(id, ''); ElMessage.success('已取消'); loadOrders() } catch { /* ignore */ } }
+async function cancel(id) {
+  try {
+    const { value } = await ElMessageBox.prompt('取消原因', '取消订单')
+    await cancelOrder(id, value || '')
+    ElMessage.success('已取消'); loadOrders()
+  } catch { /* ignore */ }
+}
 
-const tt = s => s === 1 ? 'warning' : s === 2 ? 'primary' : s === 3 ? 'success' : 'info'
-const fmt = v => v ? new Date(v).toLocaleString('zh-CN') : '-'
+async function handleDetail(id) {
+  try { detail.value = (await getOrderDetail(id)).data; drawerVisible.value = true } catch { /* ignore */ }
+}
 
 onMounted(() => isCart.value ? initCart() : loadOrders())
 </script>
@@ -114,10 +141,10 @@ onMounted(() => isCart.value ? initCart() : loadOrders())
 .page-title { font-size: 24px; margin-bottom: 20px; color: $text-primary; }
 
 // 下单
-.submit-layout { display: flex; gap: 20px; @media (max-width: 768px) { flex-direction: column; } }
+.submit-layout { display: flex; gap: 20px; @media (max-width: $bp-mobile) { flex-direction: column; } }
 .submit-main { flex: 1; display: flex; flex-direction: column; gap: 16px; }
 .submit-side { width: 260px; flex-shrink: 0;
-  @media (max-width: 768px) { width: 100%; }
+  @media (max-width: $bp-mobile) { width: 100%; }
   .total-big { text-align: center; font-family: 'DM Serif Display', serif; font-size: 28px; font-weight: 600; color: $accent; margin-bottom: 4px; }
   .total-lab { text-align: center; font-size: 13px; color: $text-secondary; margin-bottom: 16px; }
   .sbtn { width: 100%; font-weight: 600; }
@@ -149,4 +176,30 @@ onMounted(() => isCart.value ? initCart() : loadOrders())
 }
 .empty { padding-top: 60px; }
 .pager { margin-top: 20px; display: flex; justify-content: center; }
+
+.detail-num { font-size: 13px; color: $text-secondary; margin-bottom: 16px; font-family: monospace; }
+
+.detail-items {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.di-row {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 12px; border-bottom: 1px solid $border-color;
+
+  &:last-child { border-bottom: none; }
+}
+
+.di-img, .di-img-empty {
+  width: 56px; height: 56px;
+  border-radius: 6px; overflow: hidden;
+  background: $bg-page; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.di-img-empty { color: $--el-color-primary-light-5; }
+
+.di-info { flex: 1; }
+.di-name { font-size: 14px; color: $text-primary; margin-bottom: 4px; font-weight: 500; }
+.di-meta { font-size: 13px; color: $text-secondary; }
+.di-price { font-weight: 600; color: $accent; margin-left: 8px; }
 </style>

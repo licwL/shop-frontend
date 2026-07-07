@@ -70,7 +70,7 @@ onMounted(() => fetch())
 .cart-table-wrap { background: $bg-card; border-radius: $radius; overflow: hidden; }
 
 .cart-table {
-  @media (max-width: 640px) { font-size: 13px; }
+  @media (max-width: $bp-small) { font-size: 13px; }
 
   .ct-head {
     display: grid;
@@ -82,7 +82,7 @@ onMounted(() => fetch())
     color: $text-secondary;
     border-bottom: 1px solid $border-color;
 
-    @media (max-width: 640px) { display: none; }
+    @media (max-width: $bp-small) { display: none; }
   }
 
   .ct-row {
@@ -92,7 +92,7 @@ onMounted(() => fetch())
     padding: 16px;
     border-bottom: 1px solid $border-color;
 
-    @media (max-width: 640px) { grid-template-columns: 1fr; gap: 8px; }
+    @media (max-width: $bp-small) { grid-template-columns: 1fr; gap: 8px; }
 
     &:last-child { border-bottom: none; }
   }

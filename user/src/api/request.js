@@ -23,8 +23,10 @@ instance.interceptors.response.use(
   },
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/#/login'
+      clearToken()
+      localStorage.removeItem('userId')
+      localStorage.removeItem('userName')
+      window.location.href = '/login'
     }
     ElMessage.error('网络错误')
     return Promise.reject(err)

@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@shared/request'
 
 const routes = [
@@ -9,22 +9,27 @@ const routes = [
     meta: { title: '登录' },
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/RegisterView.vue'),
+    meta: { title: '注册' },
+  },
+  {
     path: '/',
     component: () => import('@/layout/UserLayout.vue'),
     redirect: '/home',
-    meta: { requiresAuth: true },
     children: [
       {
         path: 'home',
         name: 'Home',
         component: () => import('@/views/HomeView.vue'),
-        meta: { title: '首页', requiresAuth: true },
+        meta: { title: '首页' },
       },
       {
         path: 'product/:id',
         name: 'ProductDetail',
         component: () => import('@/views/ProductDetailView.vue'),
-        meta: { title: '商品详情', requiresAuth: true },
+        meta: { title: '商品详情' },
       },
       {
         path: 'cart',
@@ -50,12 +55,24 @@ const routes = [
         component: () => import('@/views/address/AddressView.vue'),
         meta: { title: '收货地址', requiresAuth: true },
       },
+      {
+        path: 'favorites',
+        name: 'Favorites',
+        component: () => import('@/views/FavoriteView.vue'),
+        meta: { title: '我的收藏', requiresAuth: true },
+      },
+      {
+        path: 'notifications',
+        name: 'Notifications',
+        component: () => import('@/views/NotificationView.vue'),
+        meta: { title: '我的通知', requiresAuth: true },
+      },
     ],
   },
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
 })
 
@@ -63,7 +80,7 @@ router.beforeEach((to, from, next) => {
   const token = getToken()
   if (to.meta.requiresAuth && !token) {
     next({ path: '/login', query: { redirect: to.fullPath } })
-  } else if (to.path === '/login' && token) {
+  } else if ((to.path === '/login' || to.path === '/register') && token) {
     next('/')
   } else {
     document.title = (to.meta.title || '商城') + ' - 电商平台'

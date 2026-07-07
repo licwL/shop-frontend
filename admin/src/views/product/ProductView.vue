@@ -13,6 +13,7 @@
         </el-select>
         <el-button type="primary" @click="handleSearch">查询</el-button>
         <el-button type="primary" @click="handleAdd">+ 新增商品</el-button>
+        <el-button type="success" @click="handleExport">导出Excel</el-button>
       </div>
       <div class="batch-bar" v-if="selectedIds.length">
         <el-button type="danger" @click="handleBatchDelete">批量删除 ({{ selectedIds.length }})</el-button>
@@ -124,17 +125,18 @@ import { ref, reactive, computed, nextTick, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import Pagination from '@shared/components/Pagination.vue'
+import { usePaginationList } from '@shared/composables/usePaginationList'
 import { getProductPage, addProduct, updateProduct, deleteProducts, uploadImage } from '@/api/product'
+import { exportProducts } from '@/api/export'
 import { getCategoryList } from '@/api/category'
 
 // ---- 列表状态 ----
-const tableData = ref([])
-const total = ref(0)
-const loading = ref(false)
 const searchName = ref('')
 const searchCategoryId = ref(null)
 const searchStatus = ref(null)
-const pagination = reactive({ page: 1, pageSize: 10 })
+const { list: tableData, total, loading, pagination, fetchList, search: handleSearch } = usePaginationList(
+  (page, pageSize) => getProductPage({ page, pageSize, name: searchName.value || undefined, categoryId: searchCategoryId.value || undefined, status: searchStatus.value ?? undefined })
+)
 const selectedIds = ref([])
 
 // ---- 分类列表（下拉用） ----
@@ -174,28 +176,6 @@ async function fetchCategories() {
     const res = await getCategoryList()
     categoryList.value = res.data ?? []
   } catch { /* ignore */ }
-}
-
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await getProductPage({
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      name: searchName.value || undefined,
-      categoryId: searchCategoryId.value || undefined,
-      status: searchStatus.value ?? undefined,
-    })
-    tableData.value = res.data.records ?? []
-    total.value = res.data.total ?? 0
-  } catch { /* 拦截器已处理 */ } finally {
-    loading.value = false
-  }
-}
-
-function handleSearch() {
-  pagination.page = 1
-  fetchList()
 }
 
 // ---- 弹窗操作 ----
@@ -293,6 +273,18 @@ async function handleBatchDelete() {
     selectedIds.value = []
     fetchList()
   } catch { /* 取消或错误 */ }
+}
+
+async function handleExport() {
+  try {
+    const res = await exportProducts()
+    const blob = res instanceof Blob ? res : new Blob([res])
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = '商品数据.xlsx'; a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch { /* ignore */ }
 }
 
 onMounted(() => {

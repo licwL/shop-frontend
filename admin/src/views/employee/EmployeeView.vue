@@ -67,9 +67,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import Pagination from '@shared/components/Pagination.vue'
+import { formatTime } from '@shared/utils'
+import { usePaginationList } from '@shared/composables/usePaginationList'
 import EmployeeDialog from '@/components/employee/EmployeeDialog.vue'
 import {
   getEmployeePage,
@@ -79,38 +81,14 @@ import {
 } from '@/api/employee'
 
 // ---- 列表状态 ----
-const tableData = ref([])
-const total = ref(0)
-const loading = ref(false)
 const searchName = ref('')
-const pagination = reactive({ page: 1, pageSize: 10 })
+const { list: tableData, total, loading, pagination, fetchList, search: handleSearch } = usePaginationList(
+  (page, pageSize) => getEmployeePage({ page, pageSize, name: searchName.value || undefined })
+)
 
 // ---- 弹窗状态 ----
 const dialogVisible = ref(false)
 const editingRow = ref(null)
-
-// ---- 数据请求 ----
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await getEmployeePage({
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      name: searchName.value || undefined,
-    })
-    tableData.value = res.data.records ?? []
-    total.value = res.data.total ?? 0
-  } catch {
-    // 错误已由拦截器处理
-  } finally {
-    loading.value = false
-  }
-}
-
-function handleSearch() {
-  pagination.page = 1
-  fetchList()
-}
 
 // ---- 弹窗操作 ----
 function handleAdd() {
@@ -153,12 +131,6 @@ async function handleStatusChange(row, newValue) {
   } catch {
     // 错误已由拦截器处理；开关因单向绑定不会变化
   }
-}
-
-// ---- 工具函数 ----
-function formatTime(val) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN')
 }
 
 onMounted(() => {

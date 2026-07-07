@@ -40,7 +40,9 @@ export function createRequest() {
     },
     (err) => {
       if (err.response?.status === 401) {
-        localStorage.removeItem('token')
+        clearToken()
+        localStorage.removeItem('userId')
+        localStorage.removeItem('userName')
         window.location.href = '/login'
       }
       ElMessage.error('网络错误')

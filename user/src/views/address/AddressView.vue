@@ -1,6 +1,9 @@
 <template>
   <div class="page-container">
-    <h2 class="page-title display-font">收货地址</h2>
+    <h2 class="page-title display-font">
+      <el-icon class="back-icon" @click="$router.back()"><ArrowLeft /></el-icon>
+      收货地址
+    </h2>
     <div class="addr-grid">
       <div v-for="a in list" :key="a.id" class="addr-card" :class="{ def: a.isDefault }">
         <div class="ac-top"><strong>{{ a.consignee }}</strong><span class="ac-phone">{{ a.phone }}</span><el-tag v-if="a.isDefault" size="small" type="warning">默认</el-tag></div>
@@ -37,7 +40,7 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, ArrowLeft } from '@element-plus/icons-vue'
 import { getAddressList, addAddress, updateAddress, deleteAddress, setDefaultAddress } from '@/api/address'
 
 const list = ref([]); const vis = ref(false); const eid = ref(null); const fr = ref(null); const saving = ref(false)
@@ -56,8 +59,9 @@ onMounted(() => load())
 </script>
 
 <style scoped lang="scss">
-.page-title { font-size: 24px; margin-bottom: 20px; }
-.addr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; @media (max-width: 768px) { grid-template-columns: repeat(2, 1fr); } @media (max-width: 480px) { grid-template-columns: 1fr; } }
+.page-title { font-size: 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.back-icon { cursor: pointer; color: $text-secondary; transition: color 0.2s; &:hover { color: $--el-color-primary; } }
+.addr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; @media (max-width: $bp-mobile) { grid-template-columns: repeat(2, 1fr); } @media (max-width: 480px) { grid-template-columns: 1fr; } }
 .addr-card { background: $bg-card; border: 1px solid $border-color; border-radius: $radius; padding: 18px; min-height: 120px; transition: 0.2s;
   &.def { border-color: $--el-color-primary; }
   .ac-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px; .ac-phone { color: $text-secondary; font-size: 13px; } }

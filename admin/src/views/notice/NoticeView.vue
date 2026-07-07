@@ -115,19 +115,20 @@
 import { ref, reactive, computed, nextTick, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Pagination from '@shared/components/Pagination.vue'
+import { formatTime } from '@shared/utils'
+import { usePaginationList } from '@shared/composables/usePaginationList'
 import {
   getNoticePage, addNotice, updateNotice, deleteNotices, setNoticeStatus,
   getNoticeTypeList, addNoticeType, updateNoticeType, deleteNoticeType,
 } from '@/api/notice'
 
 // ---- 列表 ----
-const tableData = ref([])
-const total = ref(0)
-const loading = ref(false)
 const searchTitle = ref('')
 const searchTypeId = ref(null)
 const searchStatus = ref(null)
-const pagination = reactive({ page: 1, pageSize: 10 })
+const { list: tableData, total, loading, pagination, fetchList, search: handleSearch } = usePaginationList(
+  (page, pageSize) => getNoticePage({ page, pageSize, title: searchTitle.value || undefined, typeId: searchTypeId.value || undefined, status: searchStatus.value ?? undefined })
+)
 const selectedIds = ref([])
 const typeList = ref([])
 
@@ -194,26 +195,6 @@ async function handleDelType(id) {
     fetchTypes()
   } catch { /* ignore */ }
 }
-
-// ---- 数据 ----
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await getNoticePage({
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      title: searchTitle.value || undefined,
-      typeId: searchTypeId.value || undefined,
-      status: searchStatus.value ?? undefined,
-    })
-    tableData.value = res.data.records ?? []
-    total.value = res.data.total ?? 0
-  } catch { /* ignore */ } finally {
-    loading.value = false
-  }
-}
-
-function handleSearch() { pagination.page = 1; fetchList() }
 
 // ---- 弹窗 ----
 function handleAdd() {
@@ -283,11 +264,6 @@ async function handleBatchDelete() {
     selectedIds.value = []
     fetchList()
   } catch { /* ignore */ }
-}
-
-function formatTime(val) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN')
 }
 
 onMounted(() => { fetchTypes(); fetchList() })

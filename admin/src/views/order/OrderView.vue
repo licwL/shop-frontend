@@ -10,6 +10,7 @@
         <el-date-picker v-model="searchDate" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width:260px" />
         <el-button type="primary" @click="handleSearch">查询</el-button>
         <el-button @click="handleReset">重置</el-button>
+        <el-button type="success" @click="handleExport">导出Excel</el-button>
       </div>
     </el-card>
 
@@ -25,7 +26,7 @@
         </el-table-column>
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="statusType(row.status)" size="small">{{ orderStatusText(row.status) }}</el-tag>
+            <el-tag :type="orderStatusType(row.status)" size="small">{{ orderStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="下单时间" width="170">
@@ -49,7 +50,7 @@
         <el-descriptions :column="1" border>
           <el-descriptions-item label="订单号">{{ detail.number }}</el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag :type="statusType(detail.status)" size="small">{{ orderStatusText(detail.status) }}</el-tag>
+            <el-tag :type="orderStatusType(detail.status)" size="small">{{ orderStatusText(detail.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="用户">{{ detail.userName }}</el-descriptions-item>
           <el-descriptions-item label="手机号">{{ detail.phone }}</el-descriptions-item>
@@ -81,57 +82,47 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Pagination from '@shared/components/Pagination.vue'
-import { ORDER_STATUS } from '@shared/utils'
+import { ORDER_STATUS, orderStatusText, orderStatusType, formatTime } from '@shared/utils'
+import { usePaginationList } from '@shared/composables/usePaginationList'
 import { getOrderPage, getOrderDetail, setOrderStatus } from '@/api/order'
+import { exportOrders } from '@/api/export'
 
 // ---- 列表状态 ----
-const tableData = ref([])
-const total = ref(0)
-const loading = ref(false)
 const searchNumber = ref('')
 const searchStatus = ref(null)
 const searchDate = ref(null)
-const pagination = reactive({ page: 1, pageSize: 10 })
+const { list: tableData, total, loading, pagination, fetchList, search: handleSearch } = usePaginationList(
+  (page, pageSize) => {
+    const params = { page, pageSize, number: searchNumber.value || undefined, status: searchStatus.value ?? undefined }
+    if (searchDate.value?.length === 2) { params.beginTime = searchDate.value[0]; params.endTime = searchDate.value[1] }
+    return getOrderPage(params)
+  }
+)
 
 // ---- 详情抽屉 ----
 const drawerVisible = ref(false)
 const detail = ref(null)
-
-// ---- 数据请求 ----
-async function fetchList() {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      number: searchNumber.value || undefined,
-      status: searchStatus.value ?? undefined,
-    }
-    if (searchDate.value?.length === 2) {
-      params.beginTime = searchDate.value[0]
-      params.endTime = searchDate.value[1]
-    }
-    const res = await getOrderPage(params)
-    tableData.value = res.data.records ?? []
-    total.value = res.data.total ?? 0
-  } catch { /* 拦截器已处理 */ } finally {
-    loading.value = false
-  }
-}
-
-function handleSearch() {
-  pagination.page = 1
-  fetchList()
-}
 
 function handleReset() {
   searchNumber.value = ''
   searchStatus.value = null
   searchDate.value = null
   handleSearch()
+}
+
+async function handleExport() {
+  try {
+    const res = await exportOrders()
+    const blob = res instanceof Blob ? res : new Blob([res])
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = '订单数据.xlsx'; a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch { /* ignore */ }
 }
 
 // ---- 详情 ----
@@ -152,25 +143,6 @@ async function handleStatus(row, status) {
     ElMessage.success(`已${label}`)
     fetchList()
   } catch { /* 取消或错误 */ }
-}
-
-// ---- 工具 ----
-const statusType = (s) => {
-  if (s === 1) return 'warning'
-  if (s === 2) return 'primary'
-  if (s === 3) return 'success'
-  if (s === 4) return 'info'
-  if (s === 5) return 'danger'
-  return 'info'
-}
-
-function formatTime(val) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN')
-}
-
-function orderStatusText(val) {
-  return ORDER_STATUS[val] || '未知'
 }
 
 onMounted(() => {
